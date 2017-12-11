@@ -19,7 +19,12 @@ export default class Renderer {
     this.context.fillStyle = 'black';
     this.context.strokeStyle = 'black';
 
-    this.transformationMatrix = projectionMatrix.mmul(viewMatrix.mmul(modelMatrix));
+    this.viewProjectionMatrix = projectionMatrix.mmul(viewMatrix);
+    this.setModelMatrix(modelMatrix);
+  }
+
+  setModelMatrix(modelMatrix) {
+    this.transformationMatrix = this.viewProjectionMatrix.mmul(modelMatrix);
   }
 
   /**
@@ -57,10 +62,20 @@ export default class Renderer {
     this.scaleToCanvasSize(p1Result);
     this.scaleToCanvasSize(p2Result);
 
+    this.context.beginPath();
     this.context.moveTo(p1Result.get(0, 0), p1Result.get(1, 0));
     this.context.lineTo(p2Result.get(0, 0), p2Result.get(1, 0));
     this.context.stroke();
     this.context.closePath();
+  }
+
+  /**
+   * @param {Vec3[][]} edges
+   */
+  drawEdges(edges) {
+    edges.forEach(edge => {
+      this.drawLine(edge[0], edge[1]);
+    });
   }
 
   /**
@@ -72,6 +87,11 @@ export default class Renderer {
 
     // Transform to canvas size
     vector.set(0, 0, vector.get(0, 0) * this.canvas.width);
-    vector.set(1, 0, vector.get(1, 0) * this.canvas.height);
+    // 1 - y because in HTMLCanvasElement y axis is pointed south
+    vector.set(1, 0, (1 - vector.get(1, 0)) * this.canvas.height);
+  }
+
+  clearCanvas() {
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 }
